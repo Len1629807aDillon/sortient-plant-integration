@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sortient-plant-integration"
+version = "0.1.0"
+description = "Advanced AI-driven recycling plant integration toolkit"
+authors = [
+  { name = "Sortient Systems" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = ["recycling", "robotics", "ai", "integration", "industrial automation"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Manufacturing",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Human Machine Interfaces"
+]
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "scikit-learn>=1.4",
+  "pydantic>=2.6",
+  "scipy>=1.12",
+  "networkx>=3.2",
+  "rich>=13.7",
+  "typer>=0.12",
+  "pyyaml>=6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.1",
+  "pytest-cov>=4.1",
+  "ruff>=0.3"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["plant_integration*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-ra -q"
+pythonpath = ["."]
+

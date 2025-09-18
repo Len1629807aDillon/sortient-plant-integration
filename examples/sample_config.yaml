@@ -1,0 +1,23 @@
+plant_id: "sortient-demo-plant"
+data_ingestion:
+  source: "simulated"
+  refresh_interval_ms: 200
+  max_batch_size: 512
+  metadata:
+    shift: "day"
+    supervisor: "Operations"
+robotics:
+  protocol: "ros2"
+  endpoint: "ws://localhost:9090"
+  namespace: "sortient/demo"
+  max_queue_size: 4000
+  safety_stop_topic: "/sortient/safety/stop"
+  allowed_joint_ranges:
+    joint_1: [-1.57, 1.57]
+    joint_2: [-1.2, 1.2]
+    joint_3: [-1.5, 1.5]
+  
+enable_predictive_maintenance: true
+enable_closed_loop_control: true
+enable_realtime_dashboard: true
+materials_catalog: "examples/materials_catalog.csv"

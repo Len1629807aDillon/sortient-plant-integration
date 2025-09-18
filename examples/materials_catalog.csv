@@ -1,0 +1,6 @@
+material_class,description,default_lane,density_kg_m3,recovery_target
+plastic,High-grade PET plastic,lane_a,1380,0.95
+glass,Container glass,lane_b,2500,0.93
+metal,Aluminum beverage cans,lane_b,2700,0.98
+paper,Cardboard packaging,lane_a,700,0.90
+organic,Food residue,lane_c,600,0.80
