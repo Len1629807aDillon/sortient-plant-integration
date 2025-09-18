@@ -1,44 +1,66 @@
 # Sortient Plant Integration
 
-Sortient Plant Integration is an open-source, production-grade toolkit that connects advanced
-recycling AI with industrial robotics. The project demonstrates how the Sortient technology stack
-can be integrated with modern material recovery facilities, enabling real-time decision making,
-robotic execution, and facility-wide analytics.
+Sortient Plant Integration is a production-grade, open-source reference stack that demonstrates how
+to blend computer vision, decision intelligence, and robotics control inside a modern recycling
+facility. The project is designed so that newcomers can understand the big picture while systems
+integrators can dive straight into robotics protocols, digital twin modelling, and analytics tools.
 
-## Key Capabilities
+## Why this project matters
 
-- **AI Material Detection** – High-performance detection pipeline with confidence tracking and
-  contamination analysis.
-- **Decision Planning** – Adaptive lane assignment using throughput-aware heuristics.
-- **Robotics Integration** – Standards-compliant command generation for ROS 2, OPC UA, and EtherCAT
-  robotic systems.
-- **Digital Twin Simulation** – Graph-based plant simulator to evaluate conveyor layouts and energy
-  consumption.
-- **Analytics** – Accuracy, throughput, and recovery metrics for operational intelligence.
-- **CLI Tooling** – Typer-based CLI to run integration demos, inspect configuration, and orchestrate
-  pipelines end-to-end.
+Recycling plants are complex cyber-physical systems. Waste streams arrive continuously, materials
+must be identified in milliseconds, and robots need to move safely alongside humans. Sortient Plant
+Integration shows how to stitch these layers together:
 
-## Project Structure
+- **Understandable for everyone** – The repository includes guided documentation, an approachable
+  command-line interface, and a walk-through configuration so stakeholders can see the technology
+  flow without deep technical knowledge.
+- **Robotics-native** – Command builders cover ROS 2, OPC UA, EtherCAT, Modbus TCP, and Fanuc PCDK.
+  Commands carry safety metadata, sequence identifiers, and quality-of-service hints so that they
+  can slot directly into industrial controllers.
+- **Digital twin ready** – A graph-based facility simulator models conveyor networks, predicts
+  recovery rates, and exports energy/throughput reports that can be reviewed before hardware is
+  deployed.
+- **Analytics aware** – Accuracy breakdowns, throughput trends, OEE calculators, and predictive
+  maintenance helpers make it easy to evaluate operational performance.
+
+## Quick tour for non-specialists
+
+1. **AI identifies materials** – A detector ingests sensor features and decides whether an item is
+   plastic, glass, metal, paper, organic material, or other supported classes.
+2. **The planner picks a lane** – Lane capacities, contamination tolerance, and current utilisation
+   are weighed to choose where the material should go.
+3. **Robotics commands are generated** – Standards-compliant payloads are produced for the protocol
+   defined in the configuration (e.g., ROS 2 trajectories or Modbus register writes).
+4. **Digital twin validates the flow** – Optional simulations stress-test conveyor layouts and
+   estimate energy consumption before physical commissioning.
+5. **Analytics close the loop** – Sliding-window throughput, OEE, and maintenance insights can be
+   surfaced to dashboards or exported to monitoring systems.
+
+The `examples/sample_config.yaml` file wires these components together so you can run a full demo in
+minutes.
+
+## Project structure
 
 ```text
 plant_integration/
-├── ai/                  # Detection pipelines and AI artifacts
-├── analytics/           # Metrics and analytical utilities
-├── config.py            # Typed configuration definitions
-├── data/                # Shared data structures
-├── integration/         # Decision planning and robotics standards
-├── pipeline/            # Integration controller orchestrating the stack
-├── robotics/            # Robotics connectivity abstractions
-├── simulation/          # Digital twin simulation utilities
-└── utils/               # Shared utilities (logging, helpers)
+├── ai/                  # Detection pipelines and AI model utilities
+├── analytics/           # Metrics, OEE, and maintenance analysis helpers
+├── config.py            # Typed configuration schema with validation
+├── data/                # Shared domain models (observations, decisions, commands)
+├── integration/         # Decision planner and robotics standards registry
+├── pipeline/            # Orchestrator that links detection, planning, and robotics
+├── robotics/            # Interface abstractions for ROS 2, OPC UA, EtherCAT, etc.
+├── simulation/          # Digital twin facility simulator and reporting utilities
+└── utils/               # Shared helpers (e.g., logging)
 ```
 
-## Getting Started
+## Getting started
 
 ### Prerequisites
 
 - Python 3.10+
-- Optional: ROS 2, OPC UA server, or EtherCAT stack if connecting to live equipment
+- Optional: access to ROS 2, OPC UA, EtherCAT, or PLC hardware if you want to replace the mock
+  interfaces with live equipment.
 
 ### Installation
 
@@ -48,101 +70,97 @@ source .venv/bin/activate
 pip install -e .[dev]
 ```
 
-### Running the Demo Pipeline
+### Run the end-to-end demo
 
-1. Prepare the configuration file (a sample is provided under `examples/sample_config.yaml`).
-2. Execute the CLI:
+```bash
+python scripts/run_pipeline.py run examples/sample_config.yaml --iterations 25
+```
 
-   ```bash
-   python scripts/run_pipeline.py run examples/sample_config.yaml --iterations 10
-   ```
+This command trains a synthetic detector (if no model exists), streams simulated material events,
+produces robotics commands with rich safety metadata, and logs digital twin results when the
+configuration enables simulations.
 
-   The command will train a synthetic detector (if not already available), stream simulated events,
-   and publish commands to the mock robotics interfaces.
-
-### Inspecting Configuration
+### Explore the configuration
 
 ```bash
 python scripts/run_pipeline.py describe-config examples/sample_config.yaml
 ```
 
-## Robotics Integration
+The configuration schema captures plant metadata, ingestion cadence, robotics protocol details,
+quality-of-service settings, and safety envelopes. Nested sections cover analytics toggles and
+whether the digital twin should export simulation reports.
 
-Sortient Plant Integration emphasizes compatibility with industry-standard communication layers.
-The project includes command builders for:
+> **Path resolution tip:** Any relative paths supplied (e.g., `materials_catalog` or
+> `digital_twin.export_path`) are resolved from the directory that contains the configuration file.
+> This keeps configs portable across environments and avoids surprises when running the CLI from
+> different working directories.
 
-| Standard    | Use Case                                | Example Payload                                         |
-| ----------- | ---------------------------------------- | -------------------------------------------------------- |
-| ROS 2       | High-speed robotic manipulators          | `trajectory_msgs/msg/JointTrajectory` with rich metadata |
-| OPC UA      | Interoperable PLC and SCADA systems      | Method calls invoking `TriggerSortingSequence`           |
-| EtherCAT    | Deterministic high-speed actuator control| Compact frame payloads for air jets or mechanical gates  |
+### Run the digital twin on its own
 
-Integrators can extend `StandardCommandBuilder` to support additional protocols (e.g., Modbus TCP,
-Fanuc PCDK) while leveraging the shared `RoboticsCommand` abstraction. The `RoboticsInterface`
-classes provide a clear contract for exchanging commands with field devices and can be adapted to
-use ROS 2 publishers, OPC UA clients, or EtherCAT masters.
+```bash
+python scripts/run_pipeline.py simulate --steps 8 --material plastic
+```
 
-## Digital Twin Simulation
+The standalone simulator uses a sample conveyor network to estimate throughput and energy draw. The
+result is stored as structured JSON so it can be visualised or imported into MES/SCADA dashboards.
 
-The `FacilitySimulator` enables planners to model complex conveyor networks as directed graphs. By
-combining segment capacities, velocities, and energy consumption coefficients, the simulator
-produces:
+## Robotics integration highlights
 
-- Load distribution per segment
-- Estimated energy draw per time step
-- Recovery rate predictions per material class
+- **Command context awareness** – Each robotics command is created with sequence IDs, handshake
+  requirements, latency budgets, and plant identifiers. Integrators can register additional
+  standards by extending the `StandardCommandBuilder` protocol.
+- **Protocol coverage** – Builders for ROS 2, OPC UA, EtherCAT, Modbus TCP, and Fanuc PCDK translate
+  AI decisions into protocol-native payloads. The mock interfaces included in the repository mimic
+  publishers, method calls, and frame dispatch so the entire flow can be inspected without hardware.
+- **Safety-first design** – Connection states track handshake completion, heartbeat timing, and
+  dropped message counts. Diagnostics can be emitted on demand to confirm connectivity and
+  performance envelopes.
 
-These insights accelerate commissioning by validating that the robotic cell can achieve target
-throughput and purity before physical deployment.
+## Digital twin simulation
 
-## Analytics and Monitoring
+The `FacilitySimulator` represents a plant as a directed graph. Each step of the simulation updates
+segment loads, estimates energy usage with configurable coefficients, and predicts recovery rates per
+material class. Multi-step runs produce:
 
-The analytics module provides tooling for:
+- Per-step snapshots with load, energy, and recovery metrics
+- Average energy draw and recovery rate
+- Throughput estimates for every conveyor segment
+- Optional JSON exports for archival or dashboarding
 
-- Confusion matrix analysis across material classes
-- Throughput calculations over sliding windows
-- Overall Equipment Effectiveness (OEE)
-- Predictive maintenance recommendations
+These features help commissioning teams validate throughput and purity targets before making changes
+on the shop floor.
 
-Results are surfaced through Rich tables and can be exported to monitoring stacks such as Prometheus
-or Grafana.
+## Analytics and monitoring
 
-## Configuration Schema
+The analytics module provides:
 
-`IntegrationConfig` defines the parameters required to orchestrate the plant:
+- Confusion matrices and accuracy breakdowns by material class
+- Sliding-window throughput calculations and trend indicators
+- Overall Equipment Effectiveness (OEE) breakdowns
+- Predictive maintenance recommendations derived from vibration telemetry
+- Moving-average utilities for forecasting pipelines
 
-- **Plant metadata** – Unique plant identifier and optional materials catalog
-- **Data ingestion** – Source, refresh cadence, and batching strategy
-- **Robotics** – Protocol, endpoint, namespaces, and safety parameters
-- **Feature toggles** – Predictive maintenance, closed-loop control, real-time dashboards
+Outputs can be transformed into Rich tables, shipped to observability platforms, or embedded in
+reports for stakeholders.
 
-The schema is extensible and designed for infrastructure-as-code workflows.
+## Documentation and wiki
 
-## Roadmap
-
-- Real ROS 2 bridge leveraging `rclpy`
-- OPC UA client integration using `asyncua`
-- Edge deployment toolkit with containerized microservices
-- Reinforcement learning planners for dynamic lane optimization
-- Advanced predictive maintenance models using survival analysis
+Extended documentation lives in `docs/wiki/` and covers architecture, robotics integration,
+analytics practices, and simulation guidance. These guides are written so that both researchers and
+industrial engineers can navigate the project quickly.
 
 ## Contributing
 
-Contributions from the community are welcome. Suggested areas include:
-
-- Additional robotics protocol adaptors
-- Higher fidelity simulators with physics-based modelling
-- Visualization dashboards built on Plotly Dash or Streamlit
-- Integration with MES/SCADA systems
-
-Before submitting a pull request, please run:
+Contributions are welcome. High-impact areas include adding new robotics protocol adapters,
+extending the digital twin with richer physics, integrating live ROS 2/OPC UA clients, and building
+visual dashboards. Before submitting a pull request, please run:
 
 ```bash
-ruff check .
 pytest
 ```
+
+The Sortient team is excited to collaborate with the community to push recycling technology forward.
 
 ## License
 
 Sortient Plant Integration is released under the [MIT License](LICENSE).
-

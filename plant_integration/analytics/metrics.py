@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from statistics import mean
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 import numpy as np
 
@@ -97,4 +97,77 @@ class PredictiveMaintenanceInsight:
     failure_probability: float
     time_to_failure_hours: float
     recommended_action: str
+
+
+@dataclass(slots=True)
+class OeeBreakdown:
+    """Detailed view of availability, performance, and quality contributions."""
+
+    availability: float
+    performance: float
+    quality: float
+    oee: float
+
+
+def moving_average(values: Sequence[float], window: int) -> List[float]:
+    """Compute a simple moving average for trend analysis."""
+
+    if window <= 0:
+        raise ValueError("Window must be positive")
+    if not values:
+        return []
+    padded = [values[0]] * (window - 1) + list(values)
+    averages = []
+    for idx in range(window - 1, len(padded)):
+        segment = padded[idx - window + 1 : idx + 1]
+        averages.append(sum(segment) / window)
+    return averages
+
+
+def throughput_trend(window: ThroughputWindow) -> float:
+    """Estimate throughput trend as percentage change across the window."""
+
+    if len(window.counts) < 2:
+        return 0.0
+    first = window.counts[0]
+    last = window.counts[-1]
+    if first == 0:
+        return 0.0
+    return (last - first) / first
+
+
+def compute_oee_breakdown(availability: float, performance: float, quality: float) -> OeeBreakdown:
+    """Return an :class:`OeeBreakdown` with computed aggregate."""
+
+    oee_value = compute_oee(availability, performance, quality)
+    return OeeBreakdown(
+        availability=availability,
+        performance=performance,
+        quality=quality,
+        oee=oee_value,
+    )
+
+
+def recommend_maintenance(
+    telemetry: Dict[str, float],
+    threshold: float = 0.35,
+) -> List[PredictiveMaintenanceInsight]:
+    """Produce maintenance recommendations based on telemetry heuristics."""
+
+    insights: List[PredictiveMaintenanceInsight] = []
+    for component, vibration in telemetry.items():
+        probability = float(np.clip(vibration / 10.0, 0.0, 1.0))
+        if probability < threshold:
+            continue
+        hours = float(np.clip(200.0 * (1.0 - probability), 8.0, 200.0))
+        action = "schedule lubrication" if vibration < 6.0 else "dispatch technician"
+        insights.append(
+            PredictiveMaintenanceInsight(
+                component_id=component,
+                failure_probability=probability,
+                time_to_failure_hours=hours,
+                recommended_action=action,
+            )
+        )
+    return insights
 

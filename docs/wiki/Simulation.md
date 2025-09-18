@@ -20,14 +20,18 @@ for changes in routing or equipment.
 1. Initialise `FacilitySimulator` with `ConveyorSegment` definitions.
 2. Provide the current load distribution (items per segment).
 3. Choose a `MaterialClass` to determine recovery heuristics.
-4. Call `simulate_step` to compute the next state.
+4. Call `simulate` to run multi-step scenarios (or `simulate_step` for a single iteration).
 
-Outputs include the new load distribution, energy consumption (kW), and recovery rate for the
-material class.
+Outputs include per-step snapshots, average energy consumption (kW), average recovery rate, and
+throughput estimates for every segment. Reports can be exported as JSON for archival or visualisation
+in external dashboards.
+
+The CLI command `python scripts/run_pipeline.py simulate` demonstrates the workflow using a sample
+conveyor network and automatically writes the report to disk.
 
 ## Extending the Digital Twin
 
-- Integrate empirical energy coefficients per segment.
-- Model maintenance downtimes by disabling nodes or edges.
-- Integrate with reinforcement learning agents to optimise routing.
+- Integrate empirical energy coefficients per segment for more accurate energy predictions.
+- Model maintenance downtimes by disabling nodes or edges between simulation steps.
+- Use exported snapshots as training data for reinforcement learning agents to optimise routing.
 

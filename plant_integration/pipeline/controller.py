@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable, Iterator, Optional
 
 import numpy as np
@@ -15,7 +15,7 @@ from ..ai.detector import MaterialDetector
 from ..config import IntegrationConfig
 from ..data.structures import IntegrationEvent, RoboticsCommand
 from ..integration.planner import DecisionPlanner
-from ..integration.standards import RoboticsStandard
+from ..integration.standards import CommandContext, RoboticsStandard
 from ..robotics.command_stream import decisions_to_commands
 from ..robotics.interfaces import RoboticsInterface, RoboticsInterfaceFactory
 
@@ -63,6 +63,13 @@ class IntegrationController:
 
         console.rule(f"Starting integration pipeline for plant {self.config.plant_id}")
         self.robotics_interface.connect()
+        if (
+            self.config.robotics.safety.handshake_required
+            and not self.robotics_interface.state.handshake_complete
+        ):
+            console.log(
+                "[red]Robotics handshake did not complete; check safety interlocks[/red]"
+            )
 
     def shutdown(self) -> None:
         """Shutdown procedure, ensuring robotics interface disconnects cleanly."""
@@ -99,9 +106,26 @@ class IntegrationController:
         metadata = event.payload["metadata"]
         detection = self.detector.predict(feature_vector, metadata)
         decision = self.planner.plan(detection.observation)
+        context = CommandContext(
+            plant_id=self.config.plant_id,
+            sequence_id=detection.observation.observation_id,
+            safety_metadata={
+                "handshake_required": self.config.robotics.safety.handshake_required,
+                "max_payload_kg": self.config.robotics.safety.max_payload_kg,
+                "keepout_zones": self.config.robotics.safety.keepout_zones,
+            },
+            telemetry_overrides={
+                "ack_timeout_s": self.config.robotics.qos.ack_timeout_s,
+                "jitter_budget_ms": self.config.robotics.qos.jitter_tolerance_ms,
+                "ros_timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
         command = next(
             decisions_to_commands(
-                [decision], RoboticsStandard(self.config.robotics.protocol), decision.expected_actuator
+                [decision],
+                RoboticsStandard(self.config.robotics.protocol),
+                decision.expected_actuator,
+                context,
             ),
             None,
         )
@@ -110,6 +134,8 @@ class IntegrationController:
             return None
         self.robotics_interface.send(command)
         self.statistics.update(success=True)
+        if self.statistics.processed_items % 5 == 0:
+            self.robotics_interface.publish_diagnostics()
         return command
 
     def run(self, events: Iterable[IntegrationEvent], limit: Optional[int] = None) -> None:

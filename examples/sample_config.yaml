@@ -10,14 +10,35 @@ robotics:
   protocol: "ros2"
   endpoint: "ws://localhost:9090"
   namespace: "sortient/demo"
-  max_queue_size: 4000
-  safety_stop_topic: "/sortient/safety/stop"
-  allowed_joint_ranges:
-    joint_1: [-1.57, 1.57]
-    joint_2: [-1.2, 1.2]
-    joint_3: [-1.5, 1.5]
-  
-enable_predictive_maintenance: true
-enable_closed_loop_control: true
-enable_realtime_dashboard: true
-materials_catalog: "examples/materials_catalog.csv"
+  qos:
+    max_queue_size: 4000
+    heartbeat_interval_s: 0.25
+    ack_timeout_s: 1.0
+    retry_attempts: 5
+    jitter_tolerance_ms: 15
+  safety:
+    handshake_required: true
+    handshake_timeout_s: 2.5
+    emergency_stop_topic: "/sortient/safety/stop"
+    max_payload_kg: 18.0
+    keepout_zones:
+      - name: "maintenance"
+        x: 4.0
+        y: 1.5
+        z: 2.0
+        radius: 1.2
+    allowed_joint_ranges:
+      joint_1: [-1.57, 1.57]
+      joint_2: [-1.2, 1.2]
+      joint_3: [-1.5, 1.5]
+analytics:
+  enable_oee_tracking: true
+  enable_predictive_maintenance: true
+  enable_prometheus_export: false
+  sliding_window_minutes: 15
+digital_twin:
+  enabled: true
+  default_speed_mps: 1.6
+  energy_coefficient_kw_per_item: 0.045
+  export_path: "artifacts/twin_report.json"
+materials_catalog: "materials_catalog.csv"

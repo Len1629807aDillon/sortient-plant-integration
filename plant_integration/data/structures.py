@@ -53,7 +53,7 @@ class RoboticsCommand:
 
     actuator_id: str
     command_type: str
-    parameters: Dict[str, float]
+    parameters: Dict[str, object]
     issued_at: datetime
     correlation_id: Optional[str] = None
     requires_ack: bool = True

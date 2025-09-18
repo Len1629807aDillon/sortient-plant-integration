@@ -23,4 +23,6 @@ def test_planner_selects_supported_lane() -> None:
     decision = planner.plan(observation)
     assert decision.target_lane == "lane_a"
     assert decision.priority >= 1
+    telemetry = planner.telemetry()
+    assert telemetry.lane_utilization["lane_a"] > 0
 

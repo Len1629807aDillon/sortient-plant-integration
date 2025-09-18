@@ -5,7 +5,7 @@ This section outlines how to leverage the analytics toolkit within Sortient Plan
 ## Metrics Catalogue
 
 - **Detection Accuracy** – Confusion matrix, macro accuracy, weighted accuracy
-- **Throughput** – Items per hour across sliding windows
+- **Throughput** – Items per hour across sliding windows and trend analysis
 - **Recovery Rate** – Material-specific recovery performance
 - **OEE** – Availability × Performance × Quality
 - **Predictive Maintenance** – Failure probability and recommended actions per component
@@ -13,14 +13,16 @@ This section outlines how to leverage the analytics toolkit within Sortient Plan
 ## Usage Patterns
 
 1. Use `compute_confusion_matrix` and `compute_accuracy_breakdown` to evaluate model performance.
-2. Aggregate throughput with `ThroughputWindow.throughput_per_hour()` to track variability across
-   shifts.
-3. Combine `compute_oee` with operations data for executive dashboards.
-4. Surface `PredictiveMaintenanceInsight` records in maintenance management systems.
+2. Aggregate throughput with `ThroughputWindow.throughput_per_hour()` and
+   `throughput_trend(window)` to track variability across shifts.
+3. Combine `compute_oee_breakdown` with operations data for executive dashboards.
+4. Surface `PredictiveMaintenanceInsight` records in maintenance management systems and prioritise by
+   failure probability.
+5. Apply `moving_average` when smoothing sensor-derived KPIs prior to alerting.
 
 ## Integrations
 
-- Export metrics to JSON for ingestion into data warehouses.
-- Wire throughput and recovery metrics to Prometheus exporters.
-- Align predictive maintenance insights with CMMS to automate work orders.
+- Export metrics to JSON for ingestion into data warehouses or data lakes.
+- Wire throughput, trend, and OEE metrics to Prometheus exporters or Grafana dashboards.
+- Align predictive maintenance insights with CMMS to automate work orders and spare-part logistics.
 
